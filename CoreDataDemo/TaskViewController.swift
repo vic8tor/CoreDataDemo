@@ -6,12 +6,15 @@
 //
 
 import UIKit
+import CoreData
 
 class TaskViewController: UIViewController {
 
     // MARK: - Public Properties
     
     // MARK: - Private Properties
+    
+    private var context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     private lazy var taskTextField: UITextField = {
         let textField = UITextField()
@@ -23,9 +26,9 @@ class TaskViewController: UIViewController {
     
     private lazy var saveButton: UIButton = {
         createButton(
-            withTitle: "Save", andColor: UIColor(red: 21/255, green: 101/255, blue: 192/255, alpha: 194/255),
+            withTitle: "Save Task", andColor: UIColor(red: 21/255, green: 101/255, blue: 192/255, alpha: 194/255),
             action: UIAction {_ in
-                self.dismiss(animated: true)
+                self.save()
         })
     }()
     
@@ -65,7 +68,7 @@ class TaskViewController: UIViewController {
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            saveButton.topAnchor.constraint(equalTo: taskTextField.topAnchor, constant: 20),
+            saveButton.topAnchor.constraint(equalTo: taskTextField.topAnchor, constant: 40),
             saveButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
             saveButton.trailingAnchor.constraint(equalTo: view.trailingAnchor,  constant: -40)
         ])
@@ -73,7 +76,7 @@ class TaskViewController: UIViewController {
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            cancelButton.topAnchor.constraint(equalTo: saveButton.topAnchor, constant: 20),
+            cancelButton.topAnchor.constraint(equalTo: saveButton.topAnchor, constant: 40),
             cancelButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
             cancelButton.trailingAnchor.constraint(equalTo: view.trailingAnchor,  constant: -40)
         ])
@@ -89,6 +92,28 @@ class TaskViewController: UIViewController {
         buttonConfiguration.attributedTitle = AttributedString(title, attributes: attributes)
         
         return UIButton(configuration: buttonConfiguration, primaryAction: action)
+    }
+    
+    private func save() {
+//        Для сложных взаимосвязей в модели
+//        guard let entityDescription = NSEntityDescription.entity(forEntityName: "Task", in: context) else { return }
+//        guard let task = NSManagedObject(entity: entityDescription, insertInto: context) as? Task else { return }
+        
+//        Для простой модели
+        let task = Task(context: context)
+        
+        task.name = taskTextField.text
+        
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                let nserror = error as NSError
+                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+            }
+        }
+    
+        dismiss(animated: true)
     }
     
 }
