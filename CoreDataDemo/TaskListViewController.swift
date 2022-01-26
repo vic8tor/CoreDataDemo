@@ -13,12 +13,10 @@ enum Actions {
 
 class TaskListViewController: UITableViewController {
     
-    
 // MARK: - Private Properties
     let context = StorageManager.shared.persistentContainer.viewContext
     private let cellID = "task"
     private var taskList: [Task] = []
-    private var indexPathForSelectedRow: IndexPath?
     
 // MARK: - Override Methods
     override func viewWillAppear(_ animated: Bool) {
@@ -86,8 +84,11 @@ class TaskListViewController: UITableViewController {
             }
         case .edit:
             saveAction = UIAlertAction(title: "Rename", style: .default) { _ in
-                guard let task = alert.textFields?.first?.text, !task.isEmpty, let indexPath = self.indexPathForSelectedRow else { return }
+                guard let task = alert.textFields?.first?.text,
+                        !task.isEmpty,
+                        let indexPath = self.tableView.indexPathForSelectedRow else { return }
                 self.edit(at: indexPath, task)
+
             }
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
@@ -108,18 +109,12 @@ class TaskListViewController: UITableViewController {
 
         let cellIndex = IndexPath(row: taskList.count - 1, section: 0)
         tableView.insertRows(at: [cellIndex], with: .top)
-        
-        StorageManager.shared.saveContext()
-    }
+        }
     
     private func edit(at indexPath: IndexPath, _ taskName: String) {
-        StorageManager.shared.addTask(taskName) { task in
-            self.taskList[indexPath.row] = task
-            self.tableView.reloadRows(at: [indexPath], with: .top)
+        StorageManager.shared.editTask(at: indexPath, taskName)
+        tableView.reloadRows(at: [indexPath], with: .automatic)
         }
-        
-        StorageManager.shared.saveContext()
-    }
 }
 
 // MARK: - Extension
@@ -138,23 +133,29 @@ extension TaskListViewController {
         
         return cell
     }
+    
+    override func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
 
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let actionDelete = UIContextualAction(style: .destructive, title: "Delete") { (action, view, completion) in
             StorageManager.shared.deleteTask(at: indexPath.row, for: self.taskList)
             self.taskList.remove(at: indexPath.row)
             self.tableView.deleteRows(at: [indexPath], with: .top)
+            completion(true)
         }
         
         let actionEdit = UIContextualAction(style: .normal, title: "Edit") { action, view, completion in
             self.showAlert(with: "Edit Task", and: "Please enter new name for Task", action: .edit)
-        
+            completion(true)
+
         }
-        actionEdit.backgroundColor = .systemOrange
         actionEdit.image = UIImage(systemName: "square.and.pencil")
+
+        actionEdit.backgroundColor = .systemOrange
         
-        let config = UISwipeActionsConfiguration(actions: [actionDelete, actionEdit])
-        return config
+        let actionConfig = UISwipeActionsConfiguration(actions: [actionDelete, actionEdit])
+        return actionConfig
     }
-    
 }

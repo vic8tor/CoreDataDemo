@@ -25,7 +25,7 @@ class StorageManager {
         }()
     
     lazy private var context = persistentContainer.viewContext
-    
+    var taskList: [Task] = []
 // MARK: - Initializers
     private init() {}
         
@@ -59,11 +59,14 @@ class StorageManager {
         task.name = taskName
         
         completion(task)
+        saveContext()
     }
     
     func editTask(at indexPath: IndexPath, _ taskName: String) {
         let task = taskList[indexPath.row]
         task.name = taskName
+        taskList[indexPath.row] = task
+       
         saveContext()
     }
     
@@ -72,7 +75,4 @@ class StorageManager {
         
         saveContext()
     }
-    
-    
-    
 }
