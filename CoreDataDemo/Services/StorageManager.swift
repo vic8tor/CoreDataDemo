@@ -13,7 +13,7 @@ class StorageManager {
     
 // MARK: - Public Properties
     
-    var persistentContainer: NSPersistentContainer = {
+    private var persistentContainer: NSPersistentContainer = {
        
         let container = NSPersistentContainer(name: "CoreDataDemo")
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
@@ -25,7 +25,6 @@ class StorageManager {
         }()
     
     lazy private var context = persistentContainer.viewContext
-    var taskList: [Task] = []
 // MARK: - Initializers
     private init() {}
         
@@ -42,7 +41,7 @@ class StorageManager {
         }
     }
     
-    func fetchData(completion: @escaping (Result<[Task], Error>) -> Void) {
+    func fetchData(completion: (Result<[Task], Error>) -> Void) {
         let fetchRequest = Task.fetchRequest()
 
         do {
@@ -50,29 +49,27 @@ class StorageManager {
             completion(.success(taskList))
         } catch {
             print("Failed to fetch data", error)
+            completion(.failure(error))
         }
     }
 
-    
-    func addTask(_ taskName: String, completion: @escaping (Task) -> Void) {
+    func add(_ taskName: String, completion: (Task) -> Void) {
         let task = Task(context: context)
         task.name = taskName
-        
         completion(task)
         saveContext()
     }
     
-    func editTask(at indexPath: IndexPath, _ taskName: String) {
-        let task = taskList[indexPath.row]
+    func editTask(_ task: Task, taskName: String) {
         task.name = taskName
-        taskList[indexPath.row] = task
-       
         saveContext()
     }
     
     func deleteTask(at index: Int, for task: [Task]) {
         context.delete(task[index])
-        
+        saveContext()
+    }
+    func applicationWillTerminate(_ application: UIApplication) {
         saveContext()
     }
 }
